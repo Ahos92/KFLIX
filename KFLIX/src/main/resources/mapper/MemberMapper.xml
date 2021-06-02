@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kflix.mapper.MemberMapper">
+
+	<insert id="register">
+		INSERT INTO member (
+		email,
+		pwd,
+		nick,
+		birth,
+		member_age,
+		gender,
+		naver,
+		kakao
+		)
+		VALUES (
+		#{email},
+		#{pwd},
+		#{nick},
+		#{birth},
+		<if test="member_age == 0">
+			null,
+		</if>
+		<if test="member_age != 0">
+			#{member_age},
+		</if>
+		#{gender},
+		#{naver},
+		#{kakao}
+		)
+
+	</insert>
+
+	<select id="login" resultType="com.kflix.member.domain.Member">
+		SELECT * FROM member WHERE
+
+		<choose>
+			
+			<when test ="naver != null">			
+				naver = #{naver}
+			</when>
+			
+			<when test ="kakao != null">			
+				kakao = #{kakao}
+			</when>
+			
+			<otherwise>
+				email = #{email} AND pwd = #{pwd}
+			</otherwise>
+
+		</choose>
+
+	</select>
+
+	<update id="keepLogin">
+		UPDATE member SET sessionkey = #{sessionId},
+		sessionlimit = #{next} WHERE email = #{email}
+	</update>
+
+	<select id="checkMemWithSessionKey"
+		resultType="com.kflix.member.domain.Member">
+		SELECT * FROM member WHERE sessionkey = #{value} AND
+		sessionlimit > SYSDATE
+	</select>
+	
+	<select id="checkEmail"
+		resultType="_int" parameterType="String">
+		SELECT count(email) FROM member WHERE email = #{email}
+	</select>
+	
+	<update id="emailAuth" parameterType="String">
+		UPDATE member SET cert = 'Y' WHERE email = #{email}
+	</update>
+	
+	<select id= "getMemberByEmail" parameterType="String" resultType="com.kflix.member.domain.Member">
+		SELECT * FROM member WHERE email = #{email}
+	</select>
+	
+	<update id="updatePayMember">
+		UPDATE 
+			member 
+		SET 
+			ticket_id = #{ticket_id},
+			pay_sid = #{pay_sid}, 
+			pay_exp_date = to_date(sysdate) + (SELECT ticket_period FROM ticket WHERE ticket_id = #{ticket_id}),
+			pay_remove_dt = null
+		WHERE
+			email = #{email}
+	</update>
+	
+	<update id="removePayMember">
+		UPDATE 
+			member 
+		SET 
+			pay_sid = null, 
+			pay_remove_dt = sysdate
+		WHERE
+			email = #{email}
+	</update>
+	
+	<select id="schedulePayMemList" resultType="com.kflix.member.domain.Member">
+		SELECT 
+				* 
+		FROM 
+			member 
+		WHERE 
+			pay_sid IS NOT NULL
+		AND 
+			ticket_id IS NOT NULL
+		AND 
+			ticket_id != 0
+		AND
+			to_char(pay_exp_date, 'yyyyMMdd') = to_char(sysdate, 'yyyyMMdd')
+	</select>
+
+	<select id = "scheduleDelPayMemList" resultType="com.kflix.member.domain.Member">
+		SELECT 
+				* 
+		FROM 
+			member 
+		WHERE 
+			pay_sid IS NULL
+		AND 
+			ticket_id IS NOT NULL
+		AND 
+			ticket_id != 0
+		AND
+			pay_remove_dt IS NOT NULL
+		AND
+			to_char(pay_exp_date, 'yyyyMMdd') = to_char(sysdate, 'yyyyMMdd')
+	</select>
+
+	<update id="modifyMem" parameterType="com.kflix.member.domain.Member">
+		UPDATE member SET nick = #{nick} WHERE email = #{email}
+	</update>
+</mapper>

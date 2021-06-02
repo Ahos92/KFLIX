@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kflix.mapper.WatchMapper">
+
+	<!-- 뮤비 -->
+	<select id="getAllmovie"
+		resultType="com.kflix.watch.domain.MovieVO">
+		SELECT * FROM movie
+	</select>
+
+	<select id="getmovieRanking"
+		resultType="com.kflix.watch.domain.MovieVO">
+		<![CDATA[SELECT * FROM (SELECT * FROM movie ORDER BY MOVIE_RANK DESC)  WHERE ROWNUM <= 10]]>
+	</select>
+
+	<select id="getmovie"
+		resultType="com.kflix.watch.domain.MovieVO">
+		SELECT * FROM movie WHERE movie_id = #{movie_id }
+	</select>
+
+	<select id="getNewmovie"
+		resultType="com.kflix.watch.domain.MovieVO">
+		<![CDATA[SELECT * FROM movie
+		WHERE REG_DATE >= TO_DATE(sysdate-7,'YY-MM-DD')]]>
+	</select>
+	
+	<select id="getNewUpdatemovie"
+		resultType="com.kflix.watch.domain.MovieVO">
+		<![CDATA[SELECT * FROM movie
+		WHERE REG_DATE >= TO_DATE(sysdate,'YY-MM-DD')]]>
+	</select>
+
+	<!-- 좋아요 -->
+	<update id="likePlus">
+		UPDATE movie SET movie_rank = movie_rank + 1 WHERE
+		movie_id = #{movie_id}
+	</update>
+
+	<update id="likeMinus">
+		UPDATE movie SET movie_rank = movie_rank - 1 WHERE
+		movie_id = #{movie_id}
+	</update>
+
+
+	<!-- 와치 -->
+	<select id="getAllwatch"
+		resultType="com.kflix.watch.domain.WatchVO">
+		SELECT * FROM watch
+	</select>
+
+	<select id="getSelectWatch"
+		resultType="com.kflix.watch.domain.WatchVO">
+		SELECT * FROM watch WHERE email = #{email }
+	</select>
+
+	<select id="getSelectWatching"
+		resultType="com.kflix.watch.domain.WatchVO">
+		SELECT * FROM watch WHERE email = #{email } and watch_type
+		= 'WATCHING'
+	</select>
+
+	<select id="getSelectWatchUser"
+		resultType="com.kflix.watch.domain.WatchVO">
+		SELECT * FROM watch WHERE email = #{email } and movie_id =
+		#{movie_id }
+	</select>
+
+	<insert id="createWatch">
+		INSERT INTO watch VALUES (
+		watchid_seq.nextval,
+		'WATCHING',
+		#{movie_id},
+		#{email},
+		TO_DATE(sysdate,'YY-MM-DD'),
+		#{view_point}
+		)
+	</insert>
+
+	<update id="updateWatch">
+		UPDATE watch
+		SET
+		watch_type = #{watch_type},
+		view_point
+		= #{view_point}
+		WHERE email = #{email} and movie_id = #{movie_id}
+	</update>
+
+	<delete id="deleteWatch">
+		DELETE FROM watch
+		WHERE email = #{email} and movie_id
+		= #{movie_id}
+	</delete>
+
+
+	<!-- 위시 -->
+	<select id="getSelectWish"
+		resultType="com.kflix.watch.domain.WishVO">
+		SELECT * FROM wish WHERE email = #{email }
+	</select>
+
+	<select id="getSelectWishUser"
+		resultType="com.kflix.watch.domain.WishVO">
+		SELECT * FROM wish WHERE email = #{email } and movie_id =
+		#{movie_id }
+	</select>
+
+	<insert id="createWish">
+		INSERT INTO wish VALUES (
+		wishid_seq.nextval,
+		#{movie_id},
+		#{email}
+		)
+	</insert>
+
+	<delete id="deleteWish">
+		DELETE FROM wish
+		WHERE email = #{email} and movie_id =
+		#{movie_id}
+	</delete>
+
+
+	<!-- 라이크 -->
+	<select id="getSelectLikeUser"
+		resultType="com.kflix.watch.domain.LikeVO">
+		SELECT movie_id, email FROM movielike WHERE email = #{email
+		} and
+		movie_id = #{movie_id }
+	</select>
+
+	<insert id="createLike">
+		INSERT INTO movielike VALUES (
+		like_id_seq.nextval,
+		#{movie_id},
+		#{email}
+		)
+	</insert>
+
+	<delete id="deleteLike">
+		DELETE FROM movielike
+		WHERE email = #{email} and
+		movie_id = #{movie_id}
+	</delete>
+
+	<!-- 검색 -->
+	<select id="getSearch"
+		resultType="com.kflix.watch.domain.MovieVO">
+		SELECT
+		movie_id
+		FROM
+		(SELECT
+		movie_id, ROW_NUMBER()
+		OVER(PARTITION BY MOVIE_TITLE ORDER BY REG_DATE DESC )as
+		title,
+		MOVIE_TITLE,
+		DIRECTOR_NAME, ACTOR_NAME, GENRE_NAME, COUNTRY, RATING,
+		SUMMARY, REG_DATE
+		FROM
+		(SELECT
+		movie_id, MOVIE_TITLE, DIRECTOR_NAME,
+		ACTOR_NAME, GENRE_NAME,
+		COUNTRY, RATING, SUMMARY, REG_DATE
+		FROM
+		movie m,
+		director d, actor a, genre g
+		WHERE
+		m.director_id = d.director_id and
+		(a.actor_id = m.actor_id1 or a.actor_id = m.actor_id2 or a.actor_id =
+		m.actor_id3) and
+		(g.genre_id = m.genre_id1 or g.genre_id =
+		m.genre_id2))
+		WHERE
+		(MOVIE_TITLE || DIRECTOR_NAME || ACTOR_NAME ||
+		GENRE_NAME || COUNTRY
+		|| RATING || SUMMARY || REG_DATE) like '%' ||
+		#{searchValue} || '%')
+		WHERE
+		title = 1
+	</select>
+
+	<!-- 장르 -->
+	<select id="getAllGenre"
+		resultType="com.kflix.genre.domain.Genre">
+		SELECT genre_id, genre_name FROM genre
+	</select>
+
+	<!-- 티켓 확인 -->
+
+	<select id="checkTicket"
+		resultType="com.kflix.member.domain.Member">
+		SELECT
+		email, ticket_id
+		FROM
+		member
+		WHERE
+		email = #{email}
+	</select>
+
+	<!-- 알림 -->
+	<select id="getSelectAlarm"
+		resultType="com.kflix.member.domain.Member">
+		SELECT email FROM member
+	</select>
+
+	<select id="getSelectAlarmUser"
+		resultType="com.kflix.member.domain.Member">
+		SELECT alarm_count FROM member WHERE email = #{email}
+	</select>
+	
+	<update id="updateAlarm">
+		UPDATE member
+		SET
+		alarm_count = alarm_count + #{alarm_count}
+		WHERE email = #{email}
+	</update>
+	
+	<update id="cleanAlarm">
+		UPDATE member
+		SET
+		alarm_count = 0
+		WHERE email = #{email}
+	</update>
+</mapper>

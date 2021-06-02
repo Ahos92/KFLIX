@@ -1,0 +1,23 @@
+@charset "UTF-8";
+
+.input_text{
+	width: 15em;
+}
+
+#table_list{
+	width: 1200px;
+	max-width: 1200px;
+	min-width: 1200px;
+	margin-left: 350px;
+	padding-bottom:100px;
+}
+
+#board{
+	padding-top:65px;
+}
+h1{
+	color:white;
+}
+body{
+	background-color: #141414;
+}
